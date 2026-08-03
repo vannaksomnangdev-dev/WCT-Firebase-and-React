@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import { useToast } from "../contexts/ToastContext.jsx";
 import { createGroup } from "../hooks/useGroups.js";
 import Navbar from "../components/Navbar.jsx";
+import React from "react";
 
 const ICONS = ["👥", "🎮", "🎨", "📚", "🏠", "💼", "🚀", "🎯"];
 const CATEGORIES = ["Game Dev", "Web Dev", "Design", "School Project", "Study Group", "Other"];
@@ -24,14 +25,12 @@ export default function CreateGroupPage() {
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState(ICONS[0]);
 
-  // photoURL is the committed, "in use" value. urlDraft is what's being typed —
-  // they're kept separate so an in-progress URL never shows an error mid-typing.
   const [photoURL, setPhotoURL] = useState("");
   const [urlDraft, setUrlDraft] = useState("");
   const [photoError, setPhotoError] = useState(false);
 
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTab, setPickerTab] = useState("icon"); // "icon" | "url"
+  const [pickerTab, setPickerTab] = useState("icon");
   const pickerRef = useRef(null);
 
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -60,22 +59,6 @@ export default function CreateGroupPage() {
     setPhotoURL(urlDraft.trim());
   }
 
-  function handleUrlKeyDown(e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      commitUrl();
-      setPickerOpen(false);
-    }
-  }
-
-  function pickIcon(i) {
-    setIcon(i);
-    setPhotoURL("");
-    setUrlDraft("");
-    setPhotoError(false);
-    setPickerOpen(false);
-  }
-
   async function handleCreate(e) {
     e.preventDefault();
     if (!name.trim()) {
@@ -92,7 +75,7 @@ export default function CreateGroupPage() {
         category,
         isPublic,
       });
-      showToast("Group created");
+      showToast("Group created successfully!");
       navigate(`/groups/${ref.id}`);
     } catch {
       showToast("Couldn't create group.", "error");
@@ -103,28 +86,27 @@ export default function CreateGroupPage() {
   const showPhoto = photoURL && !photoError;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-12">
       <Navbar />
-      <main className="max-w-lg mx-auto px-4 py-8">
-        <div className="fade-in-section" style={{ animationDelay: "0ms" }}>
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">Create a Group</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-            Set up its profile — you can always change this later.
+      <main className="max-w-lg mx-auto px-4 pt-10">
+        <div className="mb-6 transition-all duration-500">
+          <h1 className="text-2xl font-extrabold tracking-tight text-white mb-1">Create a Group</h1>
+          <p className="text-sm text-slate-400">
+            Shape your community space — customize it however you like.
           </p>
         </div>
 
         <form
           onSubmit={handleCreate}
-          className="bg-white/80 dark:bg-slate-800/70 backdrop-blur-sm border border-white/40 dark:border-slate-700/60 shadow-xl shadow-slate-200/50 dark:shadow-black/20 rounded-3xl p-6 flex flex-col gap-5 fade-in-section"
-          style={{ animationDelay: "60ms" }}
+          className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 shadow-2xl rounded-3xl p-6 flex flex-col gap-6 transition-all duration-300"
         >
-          {/* Profile picture / icon picker */}
+          {/* Avatar / Icon picker */}
           <div className="flex flex-col items-center gap-2 relative" ref={pickerRef}>
             <button
               type="button"
               onClick={() => setPickerOpen((o) => !o)}
-              className={`w-24 h-24 rounded-2xl flex items-center justify-center text-4xl overflow-hidden shrink-0 ring-2 ring-transparent hover:ring-emerald-400 transition-all ${
-                showPhoto ? "bg-slate-100 dark:bg-slate-700" : colorForIcon(icon)
+              className={`w-24 h-24 rounded-2xl flex items-center justify-center text-4xl overflow-hidden shrink-0 ring-4 ring-slate-800 hover:ring-emerald-500/50 transition-all shadow-inner ${
+                showPhoto ? "bg-slate-800" : colorForIcon(icon)
               }`}
             >
               {showPhoto ? (
@@ -135,35 +117,33 @@ export default function CreateGroupPage() {
                   onError={() => setPhotoError(true)}
                 />
               ) : (
-                <span className="text-white">{icon}</span>
+                <span className="text-white drop-shadow-md">{icon}</span>
               )}
             </button>
-            <span className="text-[11px] text-slate-400">Click to change</span>
+            <span className="text-xs text-emerald-400 font-medium cursor-pointer hover:underline">
+              ✨ Click to change icon or image
+            </span>
 
             {pickerOpen && (
-              <div className="absolute top-28 z-10 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg p-3">
-                <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 mb-3">
+              <div className="absolute top-28 z-20 w-72 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex bg-slate-800 rounded-xl p-1 mb-3">
                   <button
                     type="button"
                     onClick={() => setPickerTab("icon")}
-                    className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
-                      pickerTab === "icon"
-                        ? "bg-white dark:bg-slate-600 shadow-sm text-slate-900 dark:text-white"
-                        : "text-slate-500 dark:text-slate-300"
+                    className={`flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all ${
+                      pickerTab === "icon" ? "bg-emerald-600 text-white shadow" : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    Choose icon
+                    Emojis
                   </button>
                   <button
                     type="button"
                     onClick={() => setPickerTab("url")}
-                    className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
-                      pickerTab === "url"
-                        ? "bg-white dark:bg-slate-600 shadow-sm text-slate-900 dark:text-white"
-                        : "text-slate-500 dark:text-slate-300"
+                    className={`flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all ${
+                      pickerTab === "url" ? "bg-emerald-600 text-white shadow" : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    Image link
+                    Image URL
                   </button>
                 </div>
 
@@ -173,11 +153,15 @@ export default function CreateGroupPage() {
                       <button
                         key={i}
                         type="button"
-                        onClick={() => pickIcon(i)}
-                        className={`w-12 h-12 rounded-lg text-xl flex items-center justify-center border transition-colors ${
+                        onClick={() => {
+                          setIcon(i);
+                          setPhotoURL("");
+                          setPickerOpen(false);
+                        }}
+                        className={`w-12 h-12 rounded-xl text-xl flex items-center justify-center border transition-all ${
                           icon === i && !showPhoto
-                            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
-                            : "border-slate-200 dark:border-slate-600"
+                            ? "border-emerald-500 bg-emerald-500/20 scale-105"
+                            : "border-slate-800 bg-slate-800/50 hover:bg-slate-800"
                         }`}
                       >
                         {i}
@@ -190,10 +174,8 @@ export default function CreateGroupPage() {
                       type="text"
                       value={urlDraft}
                       onChange={(e) => setUrlDraft(e.target.value)}
-                      onKeyDown={handleUrlKeyDown}
-                      placeholder="https://…"
-                      autoFocus
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Paste image link..."
+                      className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-800 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                     <button
                       type="button"
@@ -201,55 +183,50 @@ export default function CreateGroupPage() {
                         commitUrl();
                         setPickerOpen(false);
                       }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-xl transition-all"
                     >
-                      Use this image
+                      Apply Image
                     </button>
-                    <p className="text-[10px] text-slate-400 text-center">Leave blank and press this to go back to icons</p>
                   </div>
                 )}
               </div>
             )}
-
-            {photoError && (
-              <p className="text-[11px] text-red-400">Couldn't load that image — showing the icon instead.</p>
-            )}
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Group name</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Group Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Lane Defense Devs"
-              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="e.g. Cyberpunk Builders"
+              className="w-full px-4 py-3 rounded-xl border border-slate-700/80 bg-slate-800/60 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Description (optional)</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Description</label>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What's this group about?"
-              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="What is this community all about?"
+              className="w-full px-4 py-3 rounded-xl border border-slate-700/80 bg-slate-800/60 text-slate-100 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Category</label>
-            <div className="flex gap-2 flex-wrap mt-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Category</label>
+            <div className="flex gap-2 flex-wrap">
               {CATEGORIES.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setCategory(c)}
-                  className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                  className={`text-xs font-semibold px-3.5 py-2 rounded-xl transition-all duration-200 ${
                     category === c
-                      ? "bg-emerald-600 text-white"
-                      : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                      ? "bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20 scale-105"
+                      : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
                   }`}
                 >
                   {c}
@@ -258,22 +235,34 @@ export default function CreateGroupPage() {
             </div>
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-500 dark:text-slate-400">
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
-              className="rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
-            />
-            🌐 Make this group public (anyone can find and join, no code needed)
-          </label>
+          {/* Interactive Glowing Public Toggle Card */}
+          <div
+            onClick={() => setIsPublic(!isPublic)}
+            className={`cursor-pointer border rounded-2xl p-4 flex items-center justify-between transition-all duration-300 ${
+              isPublic
+                ? "bg-emerald-500/10 border-emerald-500/50 shadow-lg shadow-emerald-500/10"
+                : "bg-slate-800/40 border-slate-800 hover:border-slate-700"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">🌐</span>
+              <div>
+                <p className="text-sm font-bold text-slate-200">Public Community</p>
+                <p className="text-xs text-slate-400">Anyone can discover and join without an invite code.</p>
+              </div>
+            </div>
+            {/* Animated Switch Pill */}
+            <div className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${isPublic ? "bg-emerald-500" : "bg-slate-700"}`}>
+              <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${isPublic ? "translate-x-5" : "translate-x-0"}`} />
+            </div>
+          </div>
 
           <button
             type="submit"
             disabled={creating}
-            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-sm py-3.5 rounded-xl shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            {creating ? "Creating…" : "Create Group"}
+            {creating ? "Launching Community…" : "Create Group 🚀"}
           </button>
         </form>
       </main>

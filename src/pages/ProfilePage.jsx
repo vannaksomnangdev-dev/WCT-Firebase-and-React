@@ -66,6 +66,8 @@ function EditableField({ label, value, placeholder, onSave, type = "text", multi
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const { showToast } = useToast();
+  
+  // ✅ All hooks are declared at the very top level
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
@@ -73,7 +75,9 @@ export default function ProfilePage() {
     getUserProfiles([user.uid]).then((results) => setProfile(results[0]));
   }, [user?.uid]);
 
+  // ✅ Conditional checks happen AFTER all hooks have been initialized
   if (!authLoading && !user) return <Navigate to="/" replace />;
+  
   if (!profile) {
     return (
       <div className="relative min-h-screen">
@@ -105,8 +109,6 @@ export default function ProfilePage() {
       showToast("Couldn't update photo.", "error");
     }
   }
-
-  const [photoPickerOpen, setPhotoPickerOpen] = useState?.(false); // placeholder to avoid hook-order issues, replaced below
 
   return (
     <div className="relative min-h-screen">

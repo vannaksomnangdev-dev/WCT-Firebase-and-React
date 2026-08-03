@@ -5,15 +5,11 @@ import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import GroupsPage from "./pages/GroupsPage.jsx";
 import CreateGroupPage from "./pages/CreateGroupPage.jsx";
+import GroupDetail from "./pages/GroupDetail.jsx";
 
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import PostPage from "./pages/PostPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
-
-
-
-// Inside your <Routes> component:
-
 
 export default function App() {
   return (
@@ -23,10 +19,12 @@ export default function App() {
           <Route path="/" element={<Login />} />
           <Route path="/home" element={<Home />} />
           <Route path="/groups" element={<GroupsPage />} />
+          
+          {/* 👇 KEEP /groups/create ABOVE /groups/:groupId */}
           <Route path="/groups/create" element={<CreateGroupPage />} />
-
-
-
+          
+          {/* 👇 DYNAMIC ROUTE COMES AFTER */}
+          <Route path="/groups/:groupId" element={<GroupDetail />} />
 
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/post/:postId" element={<PostPage />} />

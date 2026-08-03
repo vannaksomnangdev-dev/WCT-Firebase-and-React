@@ -6,7 +6,6 @@ import { useUserGroups, joinGroupByCode } from "../hooks/useGroups.js";
 import Navbar from "../components/Navbar.jsx";
 import BackgroundBlobs from "../components/BackgroundBlobs.jsx";
 
-
 export default function GroupsPage() {
   const { user, loading: authLoading } = useAuth();
   const { showToast } = useToast();
@@ -34,11 +33,7 @@ export default function GroupsPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-400/20 dark:bg-emerald-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 -right-24 w-96 h-96 bg-sky-400/20 dark:bg-sky-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-amber-400/10 dark:bg-amber-500/10 rounded-full blur-3xl" />
-      </div>
+<BackgroundBlobs />
 
       <Navbar />
       <main className="max-w-5xl mx-auto px-4 py-8 relative">
@@ -90,7 +85,7 @@ export default function GroupsPage() {
               className="group relative overflow-hidden rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-slate-700/60 shadow-lg shadow-slate-200/40 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-0.5 transition-all fade-in-section"
               style={{ animationDelay: `${80 + index * 40}ms` }}
             >
-            <div className="h-20 relative">
+<div className="h-20 relative">
   {group.bannerPhotoURL ? (
     <img src={group.bannerPhotoURL} alt="" className="w-full h-full object-cover" />
   ) : (
@@ -108,7 +103,7 @@ export default function GroupsPage() {
                       className="w-14 h-14 rounded-xl object-cover ring-4 ring-white dark:ring-slate-800 shrink-0"
                     />
                   ) : (
-                    <div className={`w-14 h-14 rounded-xl ${group.iconBgColor || "bg-emerald-600"} ring-4 ring-white dark:ring-slate-800 text-2xl font-bold flex items-center justify-center shrink-0`}>
+<div className={`w-14 h-14 rounded-xl ${group.iconBgColor || "bg-emerald-600"} ring-4 ring-white dark:ring-slate-800 text-2xl font-bold flex items-center justify-center shrink-0`}>
   {group.iconText || group.icon || "👥"}
 </div>
                   )}

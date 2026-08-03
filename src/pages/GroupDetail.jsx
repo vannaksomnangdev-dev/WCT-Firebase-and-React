@@ -13,26 +13,12 @@ import InlineBannerEditor from "../components/group/InlineBannerEditor.jsx";
 import GroupInfoTab from "../components/group/GroupInfoTab.jsx";
 import BackgroundBlobs from "../components/BackgroundBlobs.jsx";
 import React from "react";
-export default function GroupDetail() {
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold">Group Detail Page</h1>
-    </div>
-  );
-}
+
 const TABS = [
   { key: "feed", label: "Feed" },
   { key: "members", label: "Members" },
   { key: "info", label: "Info" },
 ];
-
-export default function GroupDetail() {
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold">Group Detail</h1>
-    </div>
-  );
-}
 
 export default function GroupDetail() {
   const { groupId } = useParams();
@@ -57,7 +43,7 @@ export default function GroupDetail() {
       <div className="relative min-h-screen">
         <BackgroundBlobs />
         <Navbar />
-       <main className="max-w-3xl mx-auto px-4 py-8 relative">
+        <main className="max-w-3xl mx-auto px-4 py-8 relative">
           <p className="text-sm text-slate-400 text-center mt-12">Loading group…</p>
         </main>
       </div>
@@ -69,7 +55,7 @@ export default function GroupDetail() {
       <div className="relative min-h-screen">
         <BackgroundBlobs />
         <Navbar />
-       <main className="max-w-3xl mx-auto px-4 py-8 relative">
+        <main className="max-w-3xl mx-auto px-4 py-8 relative">
           <p className="text-sm text-slate-400 text-center mt-12">Group not found.</p>
         </main>
       </div>
@@ -107,7 +93,7 @@ export default function GroupDetail() {
       <div className="relative min-h-screen">
         <BackgroundBlobs />
         <Navbar />
-       <main className="max-w-3xl mx-auto px-4 py-8 relative">
+        <main className="max-w-3xl mx-auto px-4 py-8 relative">
           <Link to="/discover" className="text-xs text-slate-400 hover:text-emerald-600">
             &larr; Discover
           </Link>
@@ -123,7 +109,7 @@ export default function GroupDetail() {
     <div className="relative min-h-screen">
       <BackgroundBlobs />
       <Navbar />
-     <main className="max-w-3xl mx-auto px-4 py-8 relative">
+      <main className="max-w-3xl mx-auto px-4 py-8 relative">
         <Link to={isMember ? "/groups" : "/discover"} className="text-xs text-slate-400 hover:text-emerald-600">
           &larr; {isMember ? "My groups" : "Discover"}
         </Link>
