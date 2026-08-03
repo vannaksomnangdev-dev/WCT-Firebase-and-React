@@ -1,0 +1,3 @@
+bbash : npx serve .
+or by phthon : python -m http.server 5500
+or VS Code Live Server extension — right-click index.html

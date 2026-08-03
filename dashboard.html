@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: "class" };
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen transition-colors">
+
+  <!-- Navbar -->
+  <nav class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+    <div class="max-w-5xl mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-sm">
+            T
+          </div>
+          <span class="font-semibold text-slate-800 dark:text-slate-100">TaskFlow</span>
+        </div>
+
+        <!-- Desktop menu -->
+        <div class="hidden md:flex items-center gap-4">
+          <span id="user-email" class="text-sm text-slate-500 dark:text-slate-400"></span>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-xs text-slate-400">🌙</span>
+            <input type="checkbox" id="dark-toggle" class="sr-only peer" />
+            <div class="w-9 h-5 bg-slate-200 dark:bg-slate-600 peer-checked:bg-emerald-600 rounded-full relative transition-colors">
+              <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4"></div>
+            </div>
+          </label>
+          <button id="logout-btn-desktop"
+            class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-500">
+            Log Out
+          </button>
+        </div>
+
+        <!-- Mobile hamburger -->
+        <button id="navbar-toggle" class="md:hidden text-slate-600 dark:text-slate-300 p-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mobile menu, animated collapse -->
+      <div id="navbar-menu" class="md:hidden overflow-hidden max-h-0 opacity-0 transition-all duration-300 ease-in-out">
+        <div class="pb-4 flex flex-col gap-3">
+          <span id="user-email-mobile" class="text-sm text-slate-500 dark:text-slate-400"></span>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-sm text-slate-500 dark:text-slate-400">Dark mode</span>
+            <input type="checkbox" id="dark-toggle-mobile" class="sr-only peer" />
+            <div class="w-9 h-5 bg-slate-200 dark:bg-slate-600 peer-checked:bg-emerald-600 rounded-full relative transition-colors">
+              <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4"></div>
+            </div>
+          </label>
+          <button id="logout-btn-mobile"
+            class="text-left text-sm font-medium text-red-500">
+            Log Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+
+    <div class="flex items-center justify-between flex-wrap gap-4 mb-6">
+      <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100">My Tasks</h1>
+      <button id="add-task-btn"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+        + New Task
+      </button>
+    </div>
+
+    <!-- Status tabs -->
+    <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 mb-6 w-fit" id="status-tabs">
+      <button data-tab-target="todo" class="text-sm font-medium px-4 py-2 rounded-md bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white transition-colors">
+        To Do
+      </button>
+      <button data-tab-target="in-progress" class="text-sm font-medium px-4 py-2 rounded-md text-slate-500 dark:text-slate-400 transition-colors">
+        In Progress
+      </button>
+      <button data-tab-target="done" class="text-sm font-medium px-4 py-2 rounded-md text-slate-500 dark:text-slate-400 transition-colors">
+        Done
+      </button>
+    </div>
+
+    <div data-tab-panel="todo" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="todo-panel"></div>
+    <div data-tab-panel="in-progress" class=" grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="in-progress-panel"></div>
+    <div data-tab-panel="done" class=" grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="done-panel"></div>
+
+    <p id="empty-state" class="text-sm text-slate-400 text-center mt-12 hidden">
+      Nothing here yet.
+    </p>
+
+  </main>
+
+  <!-- Task modal (add/edit) -->
+  <div id="task-modal" class="fixed inset-0 bg-black/40 z-50  opacity-0 transition-opacity duration-200 flex items-center justify-center p-4">
+    <div data-modal-panel class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-xl p-6 scale-95 opacity-0 transition-all duration-200">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="modal-title" class="text-lg font-semibold text-slate-800 dark:text-slate-100">New Task</h2>
+        <button data-modal-close class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="task-form" class="flex flex-col gap-4">
+        <input type="hidden" id="task-id" />
+        <div>
+          <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Title</label>
+          <input type="text" required id="task-title"
+            class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Notes (optional)</label>
+          <textarea id="task-notes" rows="3"
+            class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Status</label>
+          <select id="task-status"
+            class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="todo">To Do</option>
+            <option value="in-progress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+
+        <div class="flex gap-2 mt-2">
+          <button type="submit"
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors">
+            Save Task
+          </button>
+          <button type="button" data-modal-close
+            class="px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- dashboard.html (fix the path to point to your actual source file, or remove dashboard.html if unused) -->
+<script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
