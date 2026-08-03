@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { castVote, toggleLike, editPost, deletePost, setComments, togglePin } from "../../hooks/usePosts.js";
 import { useToast } from "../../contexts/ToastContext.jsx";
 import UserProfilePopover from "../UserProfilePopover.jsx";
+import { sendNotification } from "../../utils/notifications.js";
 
 import VideoEmbed from "../VideoEmbed.jsx";
 
@@ -113,6 +114,8 @@ export default function PostCard({ post, userId, userName, userFriends = [], aut
       showToast("Couldn't add comment.", "error");
     }
   });
+
+
 
   async function handleDeleteComment(commentId) {
     const next = allComments.filter((c) => c.id !== commentId && c.parentId !== commentId);

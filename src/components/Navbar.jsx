@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useDarkMode } from "../hooks/useDarkMode.js";
+import { useNotifications } from "../hooks/useNotifications.js";
+import NotificationPopover from "./home/NotificationPopover.jsx";
 
 const AVATAR_COLORS = ["bg-emerald-500", "bg-sky-500", "bg-amber-500", "bg-fuchsia-500", "bg-indigo-500", "bg-violet-500"];
 
@@ -38,9 +40,13 @@ export default function Navbar() {
   const [isDark, setIsDark] = useDarkMode();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  
   const profileMenuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { notifications } = useNotifications(user?.uid);
 
   function isActive(path) {
     return location.pathname === path || location.pathname.startsWith(path + "/");
@@ -103,6 +109,29 @@ export default function Navbar() {
 
             <DarkModeToggle isDark={isDark} onToggle={setIsDark} />
 
+            {/* Notification Bell Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="relative p-2 rounded-xl text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Notifications"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {notifications.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+                )}
+              </button>
+
+              <NotificationPopover
+                isOpen={notifOpen}
+                notifications={notifications}
+                onClose={() => setNotifOpen(false)}
+              />
+            </div>
+
+            {/* Profile Avatar Dropdown */}
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setProfileMenuOpen((o) => !o)}
@@ -111,28 +140,29 @@ export default function Navbar() {
                 {initial}
               </button>
 
-{profileMenuOpen && (
-  <div className="absolute right-0 top-11 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg py-2">
-    <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
-      <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{displayName}</p>
-      <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-    </div>
-    <Link
-      to="/profile"
-      onClick={() => setProfileMenuOpen(false)}
-      className="block w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-    >
-      👤 View Profile
-    </Link>
-    <button
-      onClick={handleLogout}
-      className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-    >
-      Log Out
-    </button>
-  </div>
-)}
+              {profileMenuOpen && (
+                <div className="absolute right-0 top-11 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg py-2 z-50">
+                  <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{displayName}</p>
+                    <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                  </div>
+                  <Link
+                    to="/profile"
+                    onClick={() => setProfileMenuOpen(false)}
+                    className="block w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  >
+                    👤 View Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    Log Out
+                  </button>
+                </div>
+              )}
             </div>
+
           </div>
 
           {/* Mobile hamburger */}

@@ -192,7 +192,7 @@ export default function GroupDetail() {
             groupIsPublic={!!group.isPublic}
           />
         )}
-        {activeTab === "members" && <MemberList members={profiles} ownerId={group.ownerId} />}
+        {activeTab === "members" && <MemberList members={profiles} ownerId={group.ownerId} currentUserId={user.uid} />}
         {activeTab === "info" && <GroupInfoTab group={group} isOwner={isOwner} />}
       </main>
 
