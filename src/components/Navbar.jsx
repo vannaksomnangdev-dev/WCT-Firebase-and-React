@@ -3,7 +3,9 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useDarkMode } from "../hooks/useDarkMode.js";
 import { useNotifications } from "../hooks/useNotifications.js";
+import { getUserProfiles } from "../hooks/useUserProfile.js";
 import NotificationPopover from "./home/NotificationPopover.jsx";
+import SwitchAccountModal from "./SwitchAccountModal.jsx";
 
 const AVATAR_COLORS = ["bg-emerald-500", "bg-sky-500", "bg-amber-500", "bg-fuchsia-500", "bg-indigo-500", "bg-violet-500"];
 
@@ -41,12 +43,28 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [switchModalOpen, setSwitchModalOpen] = useState(false);
+  
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const profileMenuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { notifications } = useNotifications(user?.uid);
+  const { notifications, markAsRead, markAllAsRead } = useNotifications(user?.uid);
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setIsAdmin(false);
+      return;
+    }
+    getUserProfiles([user.uid]).then((results) => {
+      if (results && results[0]) {
+        setIsAdmin(!!results[0].isAdmin);
+      }
+    });
+  }, [user?.uid]);
 
   function isActive(path) {
     return location.pathname === path || location.pathname.startsWith(path + "/");
@@ -119,8 +137,10 @@ export default function Navbar() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-                {notifications.length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-slate-950 shadow-md ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
                 )}
               </button>
 
@@ -128,6 +148,8 @@ export default function Navbar() {
                 isOpen={notifOpen}
                 notifications={notifications}
                 onClose={() => setNotifOpen(false)}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
               />
             </div>
 
@@ -153,6 +175,24 @@ export default function Navbar() {
                   >
                     👤 View Profile
                   </Link>
+                  
+                  <button
+                    onClick={() => setSwitchModalOpen(true)}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                  >
+                    🔄 Switch Account
+                  </button>
+
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="block w-full text-left px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
+                    >
+                      🛡️ Admin Dashboard
+                    </Link>
+                  )}
+
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -207,6 +247,16 @@ export default function Navbar() {
               </Link>
             ))}
 
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-2"
+              >
+                🛡️ Admin Dashboard
+              </Link>
+            )}
+
             <div className="flex items-center justify-between py-1">
               <span className="text-sm text-slate-500 dark:text-slate-400">Dark mode</span>
               <DarkModeToggle isDark={isDark} onToggle={setIsDark} />
@@ -218,6 +268,8 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      <SwitchAccountModal isOpen={switchModalOpen} onClose={() => setSwitchModalOpen(false)} />
     </nav>
   );
 }

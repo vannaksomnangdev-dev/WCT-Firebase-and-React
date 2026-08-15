@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth, friendlyAuthError } from "../contexts/AuthContext.jsx";
 
 export default function Login() {
-  const { user, loading, signUp, logIn } = useAuth();
+  const { user, loading, signUp, logIn, resetPassword } = useAuth();
   const [tab, setTab] = useState("login");
 
   const [loginEmail, setLoginEmail] = useState("");
@@ -13,6 +13,10 @@ export default function Login() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupError, setSignupError] = useState("");
+
+  const [resetSent, setResetSent] = useState(false);
+const [resetSending, setResetSending] = useState(false);
+
 
 if (!loading && user) return <Navigate to="/home" replace />;
 
@@ -25,6 +29,22 @@ if (!loading && user) return <Navigate to="/home" replace />;
       setLoginError(friendlyAuthError(error));
     }
   }
+
+  async function handleForgotPassword() {
+  if (!loginEmail.trim()) {
+    setLoginError("Enter your email above first, then click 'Forgot password?'");
+    return;
+  }
+  setResetSending(true);
+  try {
+    await resetPassword(loginEmail.trim());
+    setResetSent(true);
+  } catch (error) {
+    setLoginError(friendlyAuthError(error));
+  } finally {
+    setResetSending(false);
+  }
+}
 
   async function handleSignup(e) {
     e.preventDefault();
@@ -93,13 +113,26 @@ if (!loading && user) return <Navigate to="/home" replace />;
                   className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
-              {loginError && <p className="text-xs text-red-500">{loginError}</p>}
-              <button
-                type="submit"
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
-              >
-                Log In
-              </button>
+<button
+  type="button"
+  onClick={handleForgotPassword}
+  disabled={resetSending}
+  className="text-xs text-emerald-600 hover:text-emerald-700 self-end disabled:opacity-60"
+>
+  {resetSending ? "Sending…" : "Forgot password?"}
+</button>
+
+{resetSent && (
+  <p className="text-xs text-emerald-600">Check your email for a password reset link.</p>
+)}
+{loginError && <p className="text-xs text-red-500">{loginError}</p>}
+
+<button
+  type="submit"
+  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+>
+  Log In
+</button>
             </form>
           ) : (
             <form onSubmit={handleSignup} className="flex flex-col gap-4">

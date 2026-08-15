@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { castVote, toggleLike, editPost, deletePost, setComments, togglePin } from "../../hooks/usePosts.js";
 import { useToast } from "../../contexts/ToastContext.jsx";
 import UserProfilePopover from "../UserProfilePopover.jsx";
-import { sendNotification } from "../../utils/notifications.js";
-
 import VideoEmbed from "../VideoEmbed.jsx";
+import { renderFormattedText } from "../../utils/formatText.jsx";
+import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { db } from "../../firebase.js";
 
 const AVATAR_COLORS = ["bg-emerald-500", "bg-sky-500", "bg-amber-500", "bg-fuchsia-500", "bg-indigo-500", "bg-violet-500"];
 
@@ -24,7 +26,8 @@ function timeAgo(ms) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-export default function PostCard({ post, userId, userName, userFriends = [], author, groupName, canManage, canInteract = true, allowVisibilityToggle = false }) {
+export default function PostCard({ post, userId, userName, userFriends = [], author, groupName, canManage, canInteract = true, allowVisibilityToggle = false, savedPostIds = [] }) {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -37,15 +40,14 @@ export default function PostCard({ post, userId, userName, userFriends = [], aut
   const [showComments, setShowComments] = useState(false);
   const [viewingProfile, setViewingProfile] = useState(null);
 
-  const [imageFit, setImageFit] = useState("cover");
-
-
   const [commentMenuOpenId, setCommentMenuOpenId] = useState(null);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState("");
 
   const menuRef = useRef(null);
   const commentMenuRef = useRef(null);
+
+  const isSaved = savedPostIds.includes(post.id);
 
   useEffect(() => {
     function onClickOutside(e) {
@@ -94,6 +96,43 @@ export default function PostCard({ post, userId, userName, userFriends = [], aut
     }
   });
 
+  async function handleToggleSave() {
+    if (!userId) return;
+    try {
+      const userRef = doc(db, "users", userId);
+      if (isSaved) {
+        await updateDoc(userRef, { savedPosts: arrayRemove(post.id) });
+        showToast("Post removed from saved items", "info");
+      } else {
+        await updateDoc(userRef, { savedPosts: arrayUnion(post.id) });
+        showToast("Post saved successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Couldn't update saved posts.", "error");
+    }
+  }
+
+  async function handleDownloadImage() {
+    if (!post.imageURL) return;
+    try {
+      showToast("Downloading image...", "info");
+      const response = await fetch(post.imageURL);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `flowgroup-image-${post.id}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error(err);
+      window.open(post.imageURL, "_blank");
+    }
+  }
+
   const handleAddComment = guard(async (parentId = null) => {
     const draft = parentId ? replyDraft : commentDraft;
     if (!draft.trim()) return;
@@ -114,8 +153,6 @@ export default function PostCard({ post, userId, userName, userFriends = [], aut
       showToast("Couldn't add comment.", "error");
     }
   });
-
-
 
   async function handleDeleteComment(commentId) {
     const next = allComments.filter((c) => c.id !== commentId && c.parentId !== commentId);
@@ -199,6 +236,22 @@ export default function PostCard({ post, userId, userName, userFriends = [], aut
       .catch(() => showToast("Couldn't copy link", "error"));
   }
 
+  async function handleReportPost() {
+    const reason = window.prompt("Reason for reporting this post:");
+    if (!reason) return;
+    try {
+      await addDoc(collection(db, "reports"), {
+        reporterId: userId,
+        targetPostId: post.id,
+        reason: reason.trim(),
+        createdAt: serverTimestamp(),
+      });
+      showToast("Post reported. Admins will review this.");
+    } catch {
+      showToast("Failed to submit report.", "error");
+    }
+  }
+
   function openProfile(uid, name, email) {
     setViewingProfile({ uid, displayName: name, email });
   }
@@ -263,7 +316,7 @@ export default function PostCard({ post, userId, userName, userFriends = [], aut
 
         {isMine && !isEditingThis && (
           <div className="relative" ref={commentMenuOpenId === comment.id ? commentMenuRef : null}>
-            <button onClick={() => setCommentMenuOpenId(commentMenuOpenId === comment.id ? null : comment.id)} className="text-slate-300 hover:text-slate-500 dark:hover:text-slate-300 px-1 text-xs">
+            <button onClick={() => setCommentMenuOpenId(commentMenuOpenId === comment.id ? null : commentMenuOpenId)} className="text-slate-300 hover:text-slate-500 dark:hover:text-slate-300 px-1 text-xs">
               ⋮
             </button>
             {commentMenuOpenId === comment.id && (
@@ -289,102 +342,173 @@ export default function PostCard({ post, userId, userName, userFriends = [], aut
   }
 
   return (
-   <div
-  className={`bg-white/70 dark:bg-slate-800/60 backdrop-blur-md shadow-lg shadow-slate-200/40 dark:shadow-black/20 rounded-2xl p-6 hover:shadow-xl transition-shadow ${
-    post.isAnnouncement
-      ? "border-2 border-rose-300 dark:border-rose-700"
-      : "border border-white/40 dark:border-slate-700/60"
-  }`}
->
-      <div className="flex items-center gap-3 mb-3">
+    <div
+      className={`bg-white/70 dark:bg-slate-800/60 backdrop-blur-md shadow-lg shadow-slate-200/40 dark:shadow-black/20 rounded-2xl p-6 hover:shadow-xl transition-shadow ${
+        post.isAnnouncement
+          ? "border-2 border-rose-300 dark:border-rose-700"
+          : "border border-white/40 dark:border-slate-700/60"
+      }`}
+    >
+      {/* Top Section: Prominent Juicy Group Badge replacing folder image with text & styles */}
+      {groupName && post.groupId && (
+        <div className="mb-4">
+          <button
+            onClick={() => navigate(`/groups/${post.groupId}`)}
+            className="group w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 hover:scale-[1.01] transition-all"
+          >
+            <div className="flex items-center gap-3.5">
+              <span className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shadow-inner font-bold">
+                👥
+              </span>
+              <div className="text-left">
+                <span className="block text-[10px] uppercase tracking-wider font-extrabold text-sky-200">
+                  Featured Community Group
+                </span>
+                <span className="text-lg font-black tracking-wide underline underline-offset-4 decoration-white/40 group-hover:decoration-white">
+                  {groupName} ↗
+                </span>
+              </div>
+            </div>
+            <span className="text-xs font-bold bg-white/20 px-3.5 py-2 rounded-lg backdrop-blur-md group-hover:bg-white/30 transition-colors">
+              Explore Group →
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Member Info Row (Compact / Smaller Underneath) */}
+      <div className="flex items-center gap-2 mb-3 px-1">
         <button onClick={() => openProfile(post.authorId, author?.displayName, author?.email)}>
-          <div className={`w-9 h-9 rounded-full ${colorFor(post.authorId)} text-white text-sm font-semibold flex items-center justify-center shrink-0 hover:ring-2 hover:ring-emerald-400 transition-all`}>
+          <div className={`w-6 h-6 rounded-full ${colorFor(post.authorId)} text-white text-[10px] font-semibold flex items-center justify-center shrink-0 hover:ring-2 hover:ring-emerald-400 transition-all`}>
             {initial}
           </div>
         </button>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => openProfile(post.authorId, author?.displayName, author?.email)}
-              className="text-sm font-medium text-slate-800 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400"
+              className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400"
             >
               {author?.displayName || "Member"}
             </button>
-            {groupName && (
-              <span className="text-[10px] font-semibold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">
-                {groupName}
-              </span>
-            )}
             {post.pinned && (
-              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full">
                 📌 Pinned
               </span>
             )}
             {post.isAnnouncement && (
-  <span className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 px-2 py-0.5 rounded-full">
-    📣 Announcement
-  </span>
-)}
-
+              <span className="text-[9px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 px-1.5 py-0.5 rounded-full">
+                📣 Announcement
+              </span>
+            )}
             {post.isPoll && (
-              <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full">
                 Poll
               </span>
             )}
             {post.visibility === "private" && (
-              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-full">
                 🔒 Private
               </span>
             )}
           </div>
         </div>
-        <span className="text-[11px] text-slate-400 whitespace-nowrap">
+        <span className="text-[10px] text-slate-400 whitespace-nowrap">
           {timeAgo(post.createdAt?.toMillis?.())}
           {post.editedAt && " · edited"}
         </span>
 
-        {canManage && !isEditing && (
-          <div className="relative" ref={menuRef}>
-            <button onClick={() => setMenuOpen((o) => !o)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-1">
-              ⋮
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-6 z-10 w-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg py-1">
+        {/* Top-Right Options Menu */}
+        <div className="relative" ref={menuRef}>
+          <button onClick={() => setMenuOpen((o) => !o)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-1 font-bold">
+            ⋮
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-6 z-10 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg py-1">
+              {canManage && (
+                <>
+                  <button
+                    onClick={async () => {
+                      setMenuOpen(false);
+                      try {
+                        await togglePin(post.id, post.pinned);
+                      } catch {
+                        showToast("Couldn't update pin.", "error");
+                      }
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  >
+                    📌 {post.pinned ? "Unpin" : "Pin"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      startEdit();
+                      setMenuOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      handleDelete();
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    🗑️ Delete
+                  </button>
+                </>
+              )}
+
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleToggleSave();
+                }}
+                className="w-full text-left px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+              >
+                {isSaved ? "🔖 Unsave Post" : "🔖 Save Post"}
+              </button>
+
+              {post.imageURL && (
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     setMenuOpen(false);
-                    try {
-                      await togglePin(post.id, post.pinned);
-                    } catch {
-                      showToast("Couldn't update pin.", "error");
-                    }
+                    handleDownloadImage();
                   }}
                   className="w-full text-left px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
-                  📌 {post.pinned ? "Unpin" : "Pin"}
+                  📥 Download Image
                 </button>
+              )}
+
+              {post.visibility === "public" && (
                 <button
                   onClick={() => {
-                    startEdit();
                     setMenuOpen(false);
+                    handleCopyLink();
                   }}
                   className="w-full text-left px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
-                  ✏️ Edit
+                  🔗 Copy Link
                 </button>
+              )}
+
+              {!canManage && (
                 <button
                   onClick={() => {
                     setMenuOpen(false);
-                    handleDelete();
+                    handleReportPost();
                   }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="w-full text-left px-3 py-1.5 text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                 >
-                  🗑️ Delete
+                  🚩 Report Post
                 </button>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {isEditing ? (
@@ -456,27 +580,21 @@ export default function PostCard({ post, userId, userName, userFriends = [], aut
           </div>
         </div>
       ) : (
-<p className="text-base text-slate-700 dark:text-slate-200 mb-4 leading-relaxed">{post.text}</p>
+        <p className="text-base text-slate-700 dark:text-slate-200 mb-4 leading-relaxed break-words">
+          {renderFormattedText(post.text)}
+        </p>
       )}
 
-{post.imageURL && !isEditing && (
-  <div className="w-full mb-3 rounded-xl overflow-hidden relative group/img">
-{post.videoURL && !isEditing && <VideoEmbed url={post.videoURL} />}
-    <img
-      src={post.imageURL}
-      alt=""
-      className={`w-full ${imageFit === "cover" ? "h-[560px] object-cover" : "max-h-[640px] object-contain bg-slate-100 dark:bg-slate-900/40"}`}
-    />
-    <button
-      type="button"
-      onClick={() => setImageFit((f) => (f === "cover" ? "contain" : "cover"))}
-      title={imageFit === "cover" ? "Show full image" : "Fill frame"}
-      className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/70 text-white text-xs flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
-    >
-      {imageFit === "cover" ? "⤢" : "⤡"}
-    </button>
-  </div>
-)}
+      {post.imageURL && !isEditing && (
+        <div className="w-full mb-3 rounded-xl overflow-hidden relative group/img bg-slate-950/90 flex items-center justify-center border border-white/10 shadow-lg">
+          {post.videoURL && !isEditing && <VideoEmbed url={post.videoURL} />}
+          <img
+            src={post.imageURL}
+            alt=""
+            className="w-full h-auto max-h-[85vh] object-contain"
+          />
+        </div>
+      )}
 
       {post.isPoll && !isEditing && options.length > 0 && (
         <div className="mb-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -526,13 +644,6 @@ export default function PostCard({ post, userId, userName, userFriends = [], aut
             <span>💬</span>
             <span>{allComments.length > 0 ? allComments.length : "Comment"}</span>
           </button>
-
-          {post.visibility === "public" && (
-            <button onClick={handleCopyLink} className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-emerald-600 transition-colors">
-              <span>🔗</span>
-              <span>Copy link</span>
-            </button>
-          )}
         </div>
       </div>
 

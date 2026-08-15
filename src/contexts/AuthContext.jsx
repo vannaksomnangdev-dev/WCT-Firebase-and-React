@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "../firebase.js";
 import { ensureUserProfile } from "../hooks/useUserProfile.js";
@@ -38,13 +39,15 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  const value = {
-    user,
-    loading,
-    signUp: (email, password) => createUserWithEmailAndPassword(auth, email, password),
-    logIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
-    logOut: () => signOut(auth),
-  };
+const value = {
+  user,
+  loading,
+  signUp: (email, password) => createUserWithEmailAndPassword(auth, email, password),
+  logIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
+  logOut: () => signOut(auth),
+  resetPassword: (email) => sendPasswordResetEmail(auth, email),
+}; //"auth/user-not-found": "No account found with that email.",
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

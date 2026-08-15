@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useToast } from "../contexts/ToastContext.jsx";
 import { usePublicFeed, useMyPosts, createPost } from "../hooks/usePosts.js";
@@ -20,6 +20,7 @@ const TABS = [
   { key: "mine", label: "My Posts" },
 ];
 
+// Fully Immersive Discovery Group Recommendation Card for FYP feed
 function FypSuggestedGroupCard({ group, userId }) {
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -188,6 +189,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 py-8 relative">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
           
+          {/* Center Feed Column */}
           <div className="w-full">
             <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 fade-in-section">Home</h1>
 
@@ -255,6 +257,7 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Right Sidebar Widgets Column */}
           <div className="flex flex-col gap-6 sticky top-8">
             <ActiveDock profiles={profileList} groups={myGroups} />
             <div className="hidden xl:block">

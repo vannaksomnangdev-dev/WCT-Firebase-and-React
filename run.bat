@@ -35,5 +35,16 @@ pause
 
 // aabbcc@test.com aabbcc
 
-
+    
 //  abc@test.com  aabbcc
+
+
+
+
+
+
+
+/// admin@gmail.com admintest
+
+@REM To actually test the admin dashboard: go to Firebase Console → Firestore → users collection 
+@REM → find your own user document → manually add a field isAdmin: true (boolean) the first time, since there's no UI yet to bootstrap the very first admin. After that, you can promote others directly from /admin in the app.
