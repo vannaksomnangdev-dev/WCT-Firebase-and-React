@@ -7,7 +7,6 @@ import { useToast } from "../contexts/ToastContext.jsx";
 import Navbar from "../components/Navbar.jsx";
 import BackgroundBlobs from "../components/BackgroundBlobs.jsx";
 import PostCard from "../components/home/PostCard.jsx";
-import React from "react";
 
 const TABS = [
   { key: "posts", label: "My Posts" },
@@ -22,12 +21,11 @@ export default function ProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("posts");
-  const [isEditingSettings, setIsEditingSettings] = useState(false); // Controls separate settings view state
+  const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [userPosts, setUserPosts] = useState([]);
   const [savedPosts, setSavedPosts] = useState([]);
   const [postLimit, setPostLimit] = useState(5);
 
-  // Edit profile form state
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -36,7 +34,6 @@ export default function ProfilePage() {
   const [bannerPhotoURL, setBannerPhotoURL] = useState("");
   const [avatarURL, setAvatarURL] = useState("");
 
-  // Upload progress indicators
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
@@ -63,7 +60,6 @@ export default function ProfilePage() {
           setAvatarURL(data.avatarURL || user.photoURL || "");
           setSavedPostIds(data.savedPosts || []);
 
-          // Fetch my posts
           const qPosts = query(
             collection(db, "posts"),
             where("authorId", "==", user.uid),
@@ -73,7 +69,6 @@ export default function ProfilePage() {
           const postsSnap = await getDocs(qPosts);
           setUserPosts(postsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
-          // Fetch saved posts if any
           if (data.savedPosts && data.savedPosts.length > 0) {
             const savedPromises = data.savedPosts.map(async (postId) => {
               const pSnap = await getDoc(doc(db, "posts", postId));
@@ -92,7 +87,6 @@ export default function ProfilePage() {
     fetchMyData();
   }, [user?.uid, user?.displayName, user?.photoURL]);
 
-  // Handle direct file uploads to Firebase Storage
   async function handleFileUpload(e, type) {
     const file = e.target.files?.[0];
     if (!file || !user?.uid) return;
@@ -135,7 +129,7 @@ export default function ProfilePage() {
         avatarURL: avatarURL.trim(),
       });
       showToast("Profile updated successfully!");
-      setIsEditingSettings(false); // Return to standard profile view
+      setIsEditingSettings(false);
     } catch (err) {
       console.error(err);
       showToast("Failed to update profile.", "error");
@@ -159,11 +153,9 @@ export default function ProfilePage() {
       <BackgroundBlobs />
       <Navbar />
 
-      {/* Profile Header Container */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="max-w-6xl mx-auto">
           
-          {/* Cover Photo Banner */}
           <div className="h-48 sm:h-80 w-full relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-700 to-slate-900 rounded-b-2xl shadow-inner">
             {bannerPhotoURL ? (
               <img src={bannerPhotoURL} alt="Cover" className="w-full h-full object-cover object-center" />
@@ -171,7 +163,6 @@ export default function ProfilePage() {
               <div className="absolute inset-0 opacity-30 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
             )}
             
-            {/* Hidden File Input & Functional Camera Button for Cover Photo */}
             <input 
               type="file" 
               id="coverPhotoFileInput" 
@@ -189,11 +180,9 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Profile Identity Row */}
           <div className="px-6 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-6 -mt-16 md:-mt-10 relative z-10">
             <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
               
-              {/* Avatar Ring Container */}
               <div className="relative group">
                 <div className="w-36 h-36 md:w-44 md:h-44 rounded-full p-1.5 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden flex items-center justify-center ring-4 ring-white dark:ring-slate-900">
                   {avatarURL ? (
@@ -205,7 +194,6 @@ export default function ProfilePage() {
                   )}
                 </div>
                 
-                {/* Hidden File Input & Functional Camera Badge to Edit Avatar */}
                 <input 
                   type="file" 
                   id="avatarFileInput" 
@@ -222,7 +210,6 @@ export default function ProfilePage() {
                 </label>
               </div>
 
-              {/* Name, Handle, and Bio Info */}
               <div className="mb-2 space-y-1.5">
                 <div className="flex items-center gap-3 flex-wrap">
                   <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -249,7 +236,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Toggle Between Main Profile and Separate Settings View */}
             <div className="flex items-center gap-3 pb-2">
               <button 
                 onClick={() => setIsEditingSettings(!isEditingSettings)}
@@ -265,7 +251,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Navigation Tabs (Only display if not in separate settings mode) */}
           {!isEditingSettings && (
             <div className="flex border-t border-slate-200 dark:border-slate-800 px-6 gap-2 overflow-x-auto mt-2">
               {TABS.map((tab) => {
@@ -293,10 +278,8 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Main Content Body Container */}
       <main className="max-w-6xl mx-auto px-4 pt-6">
         
-        {/* Separate Settings Page View */}
         {isEditingSettings ? (
           <form onSubmit={handleSaveProfile} className="max-w-3xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col gap-6">
             <div>
@@ -361,7 +344,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Media Upload Options Support (Both File Upload & URL Field) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2 border-t border-slate-100 dark:border-slate-800">
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Avatar Profile Image</label>
@@ -424,7 +406,6 @@ export default function ProfilePage() {
           </form>
         ) : (
           <>
-            {/* Tab Content: Posts */}
             {activeTab === "posts" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-6">
@@ -486,7 +467,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Tab Content: Media */}
             {activeTab === "media" && (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4">Media Gallery</h3>
@@ -510,7 +490,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Tab Content: Saved Posts */}
             {activeTab === "saved" && (
               <div className="max-w-2xl mx-auto flex flex-col gap-4">
                 {savedPosts.length === 0 ? (
@@ -534,7 +513,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Tab Content: About */}
             {activeTab === "about" && (
               <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">Overview & Details</h3>

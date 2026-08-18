@@ -131,8 +131,9 @@ export default function Home() {
   const [profiles, setProfiles] = useState({});
   const [discoverGroups, setDiscoverGroups] = useState([]);
 
-  useEffect(() => {
+useEffect(() => {
     async function fetchDiscoverGroups() {
+      if (!user?.uid) return; // Wait until user is authenticated
       try {
         const q = query(collection(db, "groups"), where("isPublic", "==", true));
         const snap = await getDocs(q);
@@ -141,8 +142,10 @@ export default function Home() {
         console.error(err);
       }
     }
-    fetchDiscoverGroups();
-  }, []);
+    if (!authLoading) {
+      fetchDiscoverGroups();
+    }
+  }, [authLoading, user?.uid]);
 
   const forYouPosts = useMemo(() => sortForYou(publicPosts), [publicPosts]);
   const visiblePosts = activeTab === "mine" ? myPosts : forYouPosts;

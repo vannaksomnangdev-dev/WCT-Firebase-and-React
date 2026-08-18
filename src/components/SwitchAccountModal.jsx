@@ -16,7 +16,6 @@ export default function SwitchAccountModal({ isOpen, onClose }) {
       setSavedAccounts([]);
     }
 
-    // Save current user to saved accounts list if logged in
     if (user?.email) {
       const stored = JSON.parse(localStorage.getItem("flowgroup_saved_accounts") || "[]");
       if (!stored.some((acc) => acc.uid === user.uid)) {
@@ -30,9 +29,9 @@ export default function SwitchAccountModal({ isOpen, onClose }) {
   async function handleSwitch(accountEmail) {
     try {
       showToast(`Switching to ${accountEmail}...`, "info");
-      // Firebase doesn't support multi-login tokens simultaneously without re-authenticating credentials,
-      // so we log out current session and prompt login or clear state for the chosen saved account.
-      await logout();
+      if (typeof logout === "function") {
+        await logout();
+      }
       onClose();
       showToast("Please sign in to the selected account.", "info");
     } catch {
@@ -42,9 +41,11 @@ export default function SwitchAccountModal({ isOpen, onClose }) {
 
   async function handleAddAccount() {
     try {
-      await logout();
+      if (typeof logout === "function") {
+        await logout();
+      }
       onClose();
-    } catch {
+    } catch (err) {
       console.error(err);
     }
   }
