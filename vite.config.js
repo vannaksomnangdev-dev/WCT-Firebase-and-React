@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  base: "./", // <-- Change this to relative path
+  base: "/WCT-Firebase-and-React/", // 👈 Ensure this matches your repo name
   server: {
     port: 3000,
   },
