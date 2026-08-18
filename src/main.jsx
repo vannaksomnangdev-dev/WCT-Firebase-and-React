@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom"; // 👈 1. Change BrowserRouter to HashRouter
 import App from "./App.jsx";
 import "./index.css";
 
@@ -12,8 +12,8 @@ if (storedTheme ? storedTheme === "dark" : prefersDark) {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}> {/* 👈 2. Replace BrowserRouter here */}
       <App />
-    </BrowserRouter>
+    </HashRouter>
   </React.StrictMode>
 );
